@@ -1,109 +1,187 @@
 import random
 import time
 
-#Class for all player and hostile characters
+#Use termcolor to color text. Colorama will automatically make it work on windows.
+import termcolor
+import colorama
+
+# Allow terminal colors on windows
+colorama.init()
+
+
+# Class for all player and hostile characters
 class Character:
     def __init__(self, name):
 
-        No_Armor = Armor('None',0,0)
+        No_Armor = Armor('None', 0, 0)
         Fists = Weapon('Fists', '1')
 
         self.name = name
+        self.money = 0
+        self.base_health = 10
         self.weapon = Fists
         self.armor = No_Armor
         self.food = []
-        self.base_health = 10
         self.health = self.base_health + self.armor.bonus
-        self.money = 0
 
-    def give_money(self,amount):
+    #Used to check player data during testing
+    def print_data(self):
+        print("PRINTING PLAYER DATA")
+        print(self.name,self.money,self.base_health,self.weapon.name,self.weapon.damage,self.weapon.value,self.armor.name,self.armor.value,self.health)
+        for food in self.food:
+            print(food.name,food.healing,food.value)
+        print("END PLAYER DATA")
+
+
+    def save_game(self, save_name):
+        print("Saving game...")
+        with open(save_name, 'w') as save:
+            #Save Player
+            save.write(self.name+'\n')
+            save.write(str(self.money)+'\n')
+            save.write(str(self.base_health)+'\n')
+
+            #Save Weapon
+            save.write(self.weapon.name+'\n')
+            save.write(self.weapon.damage+'\n')
+            save.write(str(self.weapon.value)+'\n')
+
+            #Save Armor
+            save.write(self.armor.name+'\n')
+            save.write(str(self.armor.bonus)+'\n')
+            save.write(str(self.armor.value)+'\n')
+
+            #Save Food
+            for food in self.food:
+                save.write(food.name+'\n')
+                save.write(str(food.healing)+'\n')
+                save.write(str(food.value)+'\n')
+
+        print("Saved game!")
+
+    def load_game(self,save_name):
+        with open(save_name,'r') as save:
+            #Load Player
+            self.name = save.readline().rstrip()
+            self.money = int(save.readline())
+            self.base_health = int(save.readline())
+            #Load Weapon
+            weapon_name = save.readline().rstrip()
+            weapon_dmg = save.readline().rstrip()
+            weapon_val = int(save.readline())
+            self.weapon = Weapon(weapon_name,weapon_dmg,weapon_val)
+            #Load Armor
+            armor_name = save.readline().rstrip()
+            armor_armor = save.readline().rstrip()
+            armor_val = int(save.readline())
+            self.armor = Armor(armor_name,armor_armor,armor_val)
+            #Load Food
+            loading_food = True
+            while loading_food:
+                food_name = save.readline().rstrip()
+                if food_name != '':
+                    food_healing = int(save.readline())
+                    food_value = int(save.readline())
+                    self.food.append(Food(food_name,food_healing,food_value))
+                else:
+                    loading_food = False
+
+
+
+    def give_money(self, amount):
         self.money += amount
 
     def fight(self):
-        #Choose an enemy
+        # Choose an enemy
         try:
             enemy = random.choice(self.opponents)
 
-            #Hit enemy
+            # Hit enemy
             if self.health > 0:
                 self.weapon.use(enemy)
             if enemy.health <= 0:
-                print(self.name,'killed',enemy.name,'and looted',enemy.money,'gold!')
+                text = ''.join([self.name, ' killed ', enemy.name, ' and looted ', str(enemy.money), ' gold!'])
+                print(termcolor.colored(text, 'yellow'))
                 self.money += enemy.money
                 enemy.money = 0
                 self.opponents.remove(enemy)
-        except:
-            #Something died and there are no enemies to choose from
+        except IndexError:
+            # Something died and there are no enemies to choose from
             pass
 
-    def heal(self,amount= -1):
+    def heal(self, amount=-1):
         if amount == -1:
             self.health = self.base_health + self.armor.bonus
-            print(self.name,'Fully Healed!')
+            print(self.name, 'Fully Healed!')
         else:
             self.health += amount
             if self.health > self.base_health + self.armor.bonus:
                 self.health = self.base_health + self.armor.bonus
 
-#Class for all weapons
+
+# Class for all weapons
 class Weapon:
-    def __init__(self,name,damage='1d4',value=0):
+    def __init__(self, name, damage='1d4', value=0):
         self.name = name
         self.damage = damage
         self.value = value
 
-    def use(self,target):
+    def use(self, target):
         rolled_damage = roll(self.damage)
         target.health -= rolled_damage
-        print(target.name,'is dealt',rolled_damage,'and has',max(target.health,0),'hitpoints remaining!')
+        print(target.name, 'is dealt', rolled_damage, 'and has', max(target.health, 0), 'hitpoints remaining!')
 
-#Class for all armor
+
+# Class for all armor
 class Armor:
-    def __init__(self,name,bonus,value):
+    def __init__(self, name, bonus, value):
         self.name = name
         self.bonus = bonus
         self.value = value
 
-#Class for all food
+
+# Class for all food
 class Food:
-    def __init__(self,name,healing,value):
+    def __init__(self, name, healing, value):
         self.name = name
         self.healing = healing
         self.value = value
 
-#Store to buy and sell items
+
+# Store to buy and sell items
 class Store:
     def __init__(self):
         self.weapons = []
         self.armor = []
         self.food = []
 
-        #Create weapons
-        Sword = Weapon('Sword', '1d6',50)
-        Long_Sword = Weapon('Long Sword','1d8',100)
-        Magic_Sword = Weapon('Magic Sword','2d8',500)
-        Sacred_Sword = Weapon('Sacred Sword','4d8',3000)
-        self.weapons += Sword,Long_Sword,Magic_Sword,Sacred_Sword
+        # Create weapons
+        Sword = Weapon('Sword', '1d6', 50)
+        Long_Sword = Weapon('Long Sword', '1d8', 100)
+        Magic_Sword = Weapon('Magic Sword', '2d8', 500)
+        Sacred_Sword = Weapon('Sacred Sword', '4d8', 3000)
+        self.weapons += Sword, Long_Sword, Magic_Sword, Sacred_Sword
 
-        #Create armor
-        Cloth_Armor = Armor('Cloth Armor',5,25)
-        Leather_Armor = Armor('Leather Armor',15,100)
-        Iron_Armor = Armor('Iron Armor',30,300)
-        Magic_Armor = Armor('Magic Armor',100,1500)
-        self.armor += Cloth_Armor,Leather_Armor,Iron_Armor,Magic_Armor
+        # Create armor
+        Cloth_Armor = Armor('Cloth Armor', 5, 25)
+        Leather_Armor = Armor('Leather Armor', 15, 100)
+        Iron_Armor = Armor('Iron Armor', 30, 300)
+        Magic_Armor = Armor('Magic Armor', 100, 1500)
+        self.armor += Cloth_Armor, Leather_Armor, Iron_Armor, Magic_Armor
 
-        #Create Food
-        Bread = Food('Bread',5,10)
-        Lobster = Food('Lobster',14,30)
-        self.food += Bread,Lobster
+        # Create Food
+        Bread = Food('Bread', 5, 10)
+        Lobster = Food('Lobster', 14, 30)
+        self.food += Bread, Lobster
 
     def replace_item(self, item, field, append=False):
         if not append:
-            if getattr(self.customer,field).value//2 + self.customer.money >= item.value:
-                print("Are you sure you want to replace your",getattr(self.customer,field).name,'with',item.name + '?')
+            if getattr(self.customer, field).value // 2 + self.customer.money >= item.value:
+                print("Are you sure you want to replace your", getattr(self.customer, field).name, 'with',
+                      item.name + '?')
                 x = input()
                 if x == 'y' or x == 'yes':
-                    self.customer.money += getattr(self.customer,field).value//2
+                    self.customer.money += getattr(self.customer, field).value // 2
                     self.customer.money -= item.value
                     setattr(self.customer, field, item)
                     print("Bought", item.name + '!')
@@ -156,19 +234,19 @@ class Store:
             if command.lower() == 'b' or command.lower() == 'buy':
                 self.buy()
 
-            #View inventory
+            # View inventory
             elif command.lower() == 'v' or command.lower() == 'view' or command.lower() == 'view inventory':
                 self.view_inv()
 
-            #Leave the shop
+            # Leave the shop
             elif command.lower() == 'l' or command.lower() == 'leave':
                 shopping = False
 
-            #Show the players gold
+            # Show the players gold
             elif command.lower() == 'bal' or command.lower() == 'balance':
                 self.view_gold()
 
-            #Handle buy commands
+            # Handle buy commands
             else:
                 command = command.split(' ', 1)
                 if command[0].lower() == 'b' or command[0].lower() == 'buy':
@@ -183,45 +261,49 @@ class Store:
                             self.replace_item(food, "food", append=True)
 
 
-#Used to roll dice to calculate damage and other random events
+# Used to roll dice to calculate damage and other random events
 def roll(dice_str):
     if dice_str.isdigit():
         return int(dice_str)
     dice_num = int(dice_str[:dice_str.find('d')])
-    dice_sides = int(dice_str[dice_str.find('d')+1:])
+    dice_sides = int(dice_str[dice_str.find('d') + 1:])
     output = 0
     for die in range(dice_num):
-        output += random.randint(1,dice_sides)
+        output += random.randint(1, dice_sides)
     return output
 
-#Used to battle two teams of characters
-def battle(team1,team2):
+
+# Used to battle two teams of characters
+def battle(team1, team2):
     turn = 1
     for team_member in team1:
         team_member.opponents = team2
     for team_member in team2:
         team_member.opponents = team1
     while any(team_member.health > 0 for team_member in team1) > 0 and any(enemy.health > 0 for enemy in team2):
-        print('Starting turn',turn)
+        print('Starting turn', turn)
         for team_member in team1:
             team_member.fight()
         for enemy in team2:
             enemy.fight()
-        print('Ending turn',turn)
+        print('Ending turn', turn)
         turn += 1
 
-#Handle character creation and loading saved characters
-def set_up_player():
-    file = False
-    #File IO goes here
-    if not file:
+
+# Handle character creation and loading saved characters
+def set_up_player(save_name):
+    Player = Character('Default')
+    try:
+        Player.load_game(save_name)
+    except FileNotFoundError:
         print("No save file found.")
         pname = input("Name your character:")
-        Player = Character(pname)
+        Player.name = pname
         Player.give_money(10)
-        return Player
+    return Player
 
-#I should probably make arena a class
+
+# The area to battle safely
 class Arena:
     def __init__(self):
         self.round = 1
@@ -232,16 +314,20 @@ class Arena:
         Claws = Weapon('Claws', '1d2')
         Bat.weapon = Claws
         Bat2.weapon = Claws
-        enemies = [Bat,Bat2]
-        battle([self.player],enemies)
+        Bat.money = 10
+        enemies = [Bat, Bat2]
+        battle([self.player], enemies)
         if self.player.health > 0:
             print("You beat the first round of the arena and earned 100 gold!")
             self.player.give_money(100)
             self.round += 1
+
     def round2(self):
         print('Round 2 of arena is not yet implemented.')
+
     def round3(self):
         pass
+
     def boss_fight(self):
         pass
 
@@ -255,12 +341,19 @@ class Arena:
         elif self.round == 4:
             self.boss_fight()
 
+
+
+
+
 def main():
-    Player = set_up_player()
+    save_name = 'save.sav'
+    Player = set_up_player(save_name)
     General_Store = Store()
     Fight_Arena = Arena()
     Fight_Arena.player = Player
     General_Store.customer = Player
+
+    Player.print_data()
 
     playing = True
     while playing:
@@ -274,19 +367,19 @@ def main():
             time.sleep(1)
             Player.heal()
         elif var.lower() == 'work' or var.lower() == 'w':
-            jobs = ['Woodcutting','Mining']
+            jobs = ['Woodcutting', 'Mining']
             work_time = input("How many minutes would you like to work? (10gp per minute)")
             work_time = int(work_time) * 60
             job = random.choice(jobs)
-            print('You go',job)
+            print('You go', job)
             print('Working...')
-            time.sleep(work_time)
-            Player.give_money(int(work_time/60*10))
-            print('Worked',int(work_time/60),'minutes and gained',int(work_time/60*10),'gold!')
+            # time.sleep(work_time)
+            Player.give_money(int(work_time / 60 * 10))
+            print('Worked', int(work_time / 60), 'minutes and gained', int(work_time / 60 * 10), 'gold!')
 
         elif var.lower() == 'quit' or var.lower() == 'q':
             playing = False
-    #save game
+    Player.save_game(save_name)
 
 
 if __name__ == '__main__':
