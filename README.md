@@ -9,6 +9,7 @@ How to run:
    `python --version`
 
   -Install colorama and termcolor:
+  
   `pip install colorama
    pip install termcolor`
   
