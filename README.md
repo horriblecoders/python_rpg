@@ -12,6 +12,7 @@ How to run:
   Install colorama and termcolor:
   
   `pip install colorama
+  
    pip install termcolor`
   
   Navigate to the python_rpg directory and run:
