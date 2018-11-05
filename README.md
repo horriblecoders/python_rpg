@@ -4,13 +4,13 @@
 Dependencies: colorama, termcolor
 
 How to run:
-  Ensure python3 is installed and set on your env path
-  `python --version`
+  -Ensure python3 is installed and set on your env path:
+   -`python --version`
 
-  Install colorama and termcolor:
-  `pip install colorama
-  pip install termcolor`
+  -Install colorama and termcolor:
+   -`pip install colorama`
+   -`pip install termcolor`
   
-  Run the game:
-  Navigate to the python_rpg directory
-  `python main.py`
+  -Run the game:
+   -Navigate to the python_rpg directory
+   -`python main.py`
